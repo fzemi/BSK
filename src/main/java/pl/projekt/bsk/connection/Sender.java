@@ -57,7 +57,7 @@ public class Sender implements Runnable {
                 out.write(buffer, 0, bytes);
 //                out.flush();
             }
-            
+
 
             fileInputStream.close();
             System.out.println("Koniec wysyłania");
