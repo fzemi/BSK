@@ -5,6 +5,9 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 
 import lombok.Getter;
+
+import static pl.projekt.bsk.Constants.BUFFER_SIZE;
+
 public class Sender implements Runnable {
     private Socket socket;
     private String ip;
@@ -27,7 +30,7 @@ public class Sender implements Runnable {
             in = socket.getInputStream();
             out = socket.getOutputStream();
 
-            byte[] connectionCheck = new byte[1024];  // TODO: change this value to constant (create file with CONST values)
+            byte[] connectionCheck = new byte[BUFFER_SIZE];
             in.read(connectionCheck, 0, 9);
 
             if(!(new String(connectionCheck, 0, 9).equals("connected"))) {
@@ -52,7 +55,7 @@ public class Sender implements Runnable {
             out.write(header);
 
 
-            byte[] buffer = new byte[1024];  // TODO: change this value to constant (create file with CONST values)
+            byte[] buffer = new byte[BUFFER_SIZE];
             while ((bytes = fileInputStream.read(buffer)) != -1) {
                 out.write(buffer, 0, bytes);
 //                out.flush();

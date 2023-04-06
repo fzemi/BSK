@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import static pl.projekt.bsk.Constants.BUFFER_SIZE;
 
 public class Receiver implements Runnable {
     private ServerSocket serverSocket;
@@ -41,7 +42,7 @@ public class Receiver implements Runnable {
             FileOutputStream fileOutputStream = new FileOutputStream(receivedFileDirectory + "test.jpg");
 
             // receive file from client
-            byte[] buffer = new byte[1024];  // TODO: change this value to constant (create file with CONST values)
+            byte[] buffer = new byte[BUFFER_SIZE];
             while (fileSize > 0 && (bytes = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
                 fileOutputStream.write(buffer, 0, bytes);
 //                fileOutputStream.flush();
