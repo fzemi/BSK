@@ -1,5 +1,7 @@
 package pl.projekt.bsk.connection;
 
+import lombok.Setter;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -13,10 +15,11 @@ public class Receiver implements Runnable {
     private OutputStream out;
     private InputStream in;
 
-    private String receivedFileDirectory = "D:\\Studia\\6_sem_INF\\BSK\\test\\";  // TODO: set this value
+    private String receivedFileDirectory;   // = "D:\\Studia\\6_sem_INF\\BSK\\test\\";
 
-    public Receiver(int port) {
+    public Receiver(int port, File receivedFileDirectory) {
         this.port = port;
+        this.receivedFileDirectory = receivedFileDirectory.getAbsolutePath();
     }
 
     public void start() {

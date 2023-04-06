@@ -6,6 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import pl.projekt.bsk.connection.Receiver;
@@ -24,6 +25,8 @@ public class HelloController {
     private TextField serverPortField;
     @FXML
     private TextField filePath;
+    @FXML
+    private TextField directoryPath;
     @FXML
     private Button runButton;
     @FXML
@@ -44,6 +47,7 @@ public class HelloController {
     private Runnable senderRunnable;
     private Runnable receiverRunnable;
     private File selectedFile;
+    private File receivedFileDirectory;
 
     @FXML
     public void onRunButtonClick() {
@@ -54,9 +58,15 @@ public class HelloController {
             alert.setHeaderText("Connection error");
             alert.setContentText("Please enter port");
             alert.showAndWait();
-        } else {
+        }else if(receivedFileDirectory == null || !receivedFileDirectory.exists()) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Connection error");
+            alert.setContentText("Please choose directory");
+            alert.showAndWait();
+        }else {
             serverPort = Integer.parseInt(serverPortField.getText());
-            receiverRunnable = new Receiver(serverPort);
+            receiverRunnable = new Receiver(serverPort, receivedFileDirectory);
             Thread receiverThread = new Thread(receiverRunnable);
             receiverThread.setDaemon(true);
             receiverThread.start();
@@ -98,6 +108,8 @@ public class HelloController {
                 //if connection was successful
                 connectionStatus.setFill(Color.GREEN);
                 connectButton.setDisable(true);
+                if(selectedFile!= null && selectedFile.exists())
+                    sendButton.setDisable(false);
             }).start();
         }
     }
@@ -107,12 +119,32 @@ public class HelloController {
 
         FileChooser fileChooser = new FileChooser();
         selectedFile = fileChooser.showOpenDialog((Stage)((Node)e.getSource()).getScene().getWindow());
-        if(selectedFile != null)
+        if(selectedFile != null){
             filePath.setText(selectedFile.toString());
+            if(((Sender)senderRunnable).isConnected())
+                sendButton.setDisable(false);
+        }
+    }
+
+    @FXML
+    public void onChooseDirectoryClick(ActionEvent e){
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        receivedFileDirectory = directoryChooser.showDialog((Stage)((Node)e.getSource()).getScene().getWindow());
+        if (receivedFileDirectory != null){
+            directoryPath.setText(receivedFileDirectory.toString());
+        }
     }
 
     @FXML
     public void onSendButtonClick() throws Exception {
-        ((Sender)senderRunnable).sendFile(selectedFile);
+        if(selectedFile == null || !selectedFile.exists()){
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Connection error");
+            alert.setContentText("Please choose file");
+            alert.showAndWait();
+        }else{
+            ((Sender)senderRunnable).sendFile(selectedFile);
+        }
     }
 }
