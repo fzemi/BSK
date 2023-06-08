@@ -3,6 +3,7 @@ package pl.projekt.bsk.connection;
 import java.io.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.stream.Stream;
 
 import lombok.Getter;
 
@@ -67,8 +68,6 @@ public class Sender implements Runnable {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-
-
     }
 
     @Override

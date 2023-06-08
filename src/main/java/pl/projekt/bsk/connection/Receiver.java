@@ -15,11 +15,12 @@ public class Receiver implements Runnable {
     private OutputStream out;
     private InputStream in;
 
-    private String receivedFileDirectory;   // = "D:\\Studia\\6_sem_INF\\BSK\\test\\";
+    @Setter
+    private String receivedFileDirectory;
 
     public Receiver(int port, File receivedFileDirectory) {
         this.port = port;
-        this.receivedFileDirectory = receivedFileDirectory.getAbsolutePath();
+        this.receivedFileDirectory = receivedFileDirectory == null ? (System.getProperty("user.home") + "/Downloads/") : receivedFileDirectory.getAbsolutePath();
     }
 
     public void start() {
