@@ -28,10 +28,6 @@ public class HelloApplication extends Application {
         stage.setTitle("BSK");
         stage.setScene(loginScene);
         stage.show();
-
-        byte[] iv = new byte[16];
-        new SecureRandom().nextBytes(iv);
-        System.out.println(Arrays.toString(iv));
     }
 
     public void changeScene(String fxml) throws IOException {

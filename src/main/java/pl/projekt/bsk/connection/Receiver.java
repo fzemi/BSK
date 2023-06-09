@@ -4,12 +4,23 @@ import lombok.Setter;
 import pl.projekt.bsk.KeyStorage;
 import pl.projekt.bsk.utils.EncryptionUtils;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.InvalidKeyException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Optional;
 
 import static pl.projekt.bsk.Constants.BUFFER_SIZE;
 
@@ -44,25 +55,26 @@ public class Receiver implements Runnable {
     public void receiveFile() throws Exception {
         int bytes = 0;
 
-        DataInputStream dataIn = new DataInputStream(in);
-        long fileSize = dataIn.readLong();
-        IvParameterSpec iv = new IvParameterSpec(dataIn.readNBytes(16));
-
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
+            int headerSize = receiveSize();
+            byte[] encryptedHeaderBytes = new byte[headerSize];
+            in.read(encryptedHeaderBytes, 0, headerSize);
+            MessageHeader header = EncryptionUtils.decryptMessageHeader(encryptedHeaderBytes, KeyStorage.getSessionKey());
+
             // receive file from client
             byte[] buffer = new byte[BUFFER_SIZE];
-            while (fileSize > 0 && (bytes = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
+            while (header.getFileSize() > 0 && (bytes = in.read(buffer, 0, (int) Math.min(buffer.length, header.getFileSize()))) != -1) {
                 outputStream.write(buffer, 0, bytes);
 //                fileOutputStream.flush();
             }
 
             String algorithm = "AES/CBC/PKCS5Padding";
             byte[] decodedBytes = EncryptionUtils.decryptData(algorithm, outputStream.toByteArray(),
-                    KeyStorage.getSessionKey(), iv);
+                    KeyStorage.getSessionKey(), new IvParameterSpec(header.getIv()));
 
-            Files.write(new File(receivedFileDirectory + "receivedFile.txt").toPath(), decodedBytes);
+            Files.write(new File(receivedFileDirectory + header.getFilename()).toPath(), decodedBytes);
 
             outputStream.close();
 
@@ -72,9 +84,53 @@ public class Receiver implements Runnable {
         }
     }
 
+    private void sendSessionKey()  {
+        try {
+            System.out.println("Waiting for public key...");
+            int keySize = receiveSize();
+            byte[] publicKeyBytes = new byte[keySize];
+            in.read(publicKeyBytes, 0, keySize);
+            System.out.println("Received public key");
+
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            KeyStorage.setReceivedPublicKey(Optional.ofNullable(kf.generatePublic(new X509EncodedKeySpec(publicKeyBytes))));
+
+            SecretKey sessionKey = EncryptionUtils.generateKey();
+            KeyStorage.setSessionKey(sessionKey);
+
+            byte[] encodedSessionKeyBytes = EncryptionUtils.encryptSessionKey(KeyStorage.getSessionKey(),
+                    KeyStorage.getReceivedPublicKey().get());
+
+            sendSize(encodedSessionKeyBytes.length);
+
+            out.write(encodedSessionKeyBytes, 0, encodedSessionKeyBytes.length);
+            out.flush();
+            System.out.println("Sent session key");
+        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException |
+                 InvalidKeyException | BadPaddingException | IllegalBlockSizeException |
+                 NoSuchPaddingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private int receiveSize() throws IOException {
+        byte[] sizeBytes = new byte[4];
+        in.read(sizeBytes, 0, 4);
+        return ByteBuffer.wrap(sizeBytes).getInt();
+    }
+
+    private void sendSize(int size) throws IOException {
+        out.write(ByteBuffer.allocate(4).putInt(size).array());
+    }
+
     @Override
     public void run() {
         start();
+
+        if (KeyStorage.getReceivedSessionKey().isEmpty()) {
+            System.out.println("ESESS");
+            sendSessionKey();
+        }
         while(!Thread.interrupted()) {
             try {
                 receiveFile();

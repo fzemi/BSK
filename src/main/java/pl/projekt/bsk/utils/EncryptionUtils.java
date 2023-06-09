@@ -2,23 +2,19 @@ package pl.projekt.bsk.utils;
 
 import pl.projekt.bsk.Constants;
 import pl.projekt.bsk.KeyStorage;
+import pl.projekt.bsk.connection.MessageHeader;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Scanner;
+import java.util.Optional;
 
 public class EncryptionUtils {
 
@@ -65,6 +61,8 @@ public class EncryptionUtils {
 
                 KeyStorage.setPrivateKey(keyPair.getPrivate());
                 KeyStorage.setPublicKey(keyPair.getPublic());
+                KeyStorage.setReceivedSessionKey(Optional.empty());
+                KeyStorage.setReceivedPublicKey(Optional.empty());
 
             } catch (IOException | NoSuchAlgorithmException e) {
                 e.printStackTrace();
@@ -120,5 +118,33 @@ public class EncryptionUtils {
         decryptor.init(Cipher.DECRYPT_MODE, privateKey);
         byte[] sessionKeyBytes = decryptor.doFinal(ciphertext);
         return new SecretKeySpec(sessionKeyBytes, 0, sessionKeyBytes.length, "AES");
+    }
+
+    public static byte[] encryptMessageHeader(MessageHeader header, SecretKey sessionKey) throws IOException, NoSuchPaddingException,
+            NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+        oos.writeObject(header);
+        oos.flush();
+        oos.close();
+        bos.close();
+
+        byte[] headerBytes = bos.toByteArray();
+        Cipher encrpytor = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        encrpytor.init(Cipher.ENCRYPT_MODE, sessionKey);
+        return encrpytor.doFinal(headerBytes);
+    }
+
+    public static MessageHeader decryptMessageHeader(byte[] ciphertext, SecretKey sessionKey) throws IOException, NoSuchPaddingException,
+            NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, ClassNotFoundException {
+        Cipher decryptor = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        decryptor.init(Cipher.DECRYPT_MODE, sessionKey);
+        byte[] headerBytes = decryptor.doFinal(ciphertext);
+        ByteArrayInputStream bis = new ByteArrayInputStream(headerBytes);
+        ObjectInputStream ois = new ObjectInputStream(bis);
+        MessageHeader header = (MessageHeader) ois.readObject();
+        ois.close();
+        bis.close();
+        return header;
     }
 }

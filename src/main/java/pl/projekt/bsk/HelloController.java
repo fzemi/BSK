@@ -102,6 +102,7 @@ public class HelloController {
                     }
                 }
                 //if connection was successful
+
                 connectionStatus.setFill(Color.GREEN);
                 connectButton.setDisable(true);
                 if(selectedFile!= null && selectedFile.exists())

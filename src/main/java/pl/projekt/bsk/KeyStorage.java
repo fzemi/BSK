@@ -26,8 +26,13 @@ public class KeyStorage {
     @Setter(onMethod_={@Synchronized})
     private static SecretKey sessionKey;
 
-    private Optional<PublicKey> receivedPublicKey;
-    private Optional<SecretKey> receivedSessionKey;
+    @Getter(onMethod_={@Synchronized})
+    @Setter(onMethod_={@Synchronized})
+    private static Optional<PublicKey> receivedPublicKey;
+
+    @Getter(onMethod_={@Synchronized})
+    @Setter(onMethod_={@Synchronized})
+    private static Optional<SecretKey> receivedSessionKey;
 
     public KeyStorage(KeyPair keyPair, SecretKey sessionKey) {
         publicKey = keyPair.getPublic();
@@ -37,33 +42,33 @@ public class KeyStorage {
         receivedSessionKey = Optional.empty();
     }
 
-    public synchronized void setReceivedPublicKey(PublicKey receivedPublicKey) {
-        this.receivedPublicKey = Optional.of(receivedPublicKey);
-    }
+//    public static synchronized void setReceivedPublicKey(PublicKey receivedPublicKey) {
+//        receivedPublicKey = Optional.of(receivedPublicKey);
+//    }
 
-    public synchronized void setReceivedSessionKey(SecretKey sessionKey) {
-        this.receivedSessionKey = Optional.of(sessionKey);
-    }
+//    public synchronized void setReceivedSessionKey(SecretKey sessionKey) {
+//        this.receivedSessionKey = Optional.of(sessionKey);
+//    }
 
-    public synchronized PublicKey getReceivedPublicKey() {
-        while (receivedPublicKey.isEmpty()) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        return receivedPublicKey.get();
-    }
-
-    public synchronized SecretKey getReceivedSessionKey() {
-        while (receivedSessionKey.isEmpty()) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        return receivedSessionKey.get();
-    }
+//    public static synchronized PublicKey getReceivedPublicKey() {
+//        while (receivedPublicKey.isEmpty()) {
+//            try {
+//                wait();
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//        return receivedPublicKey.get();
+//    }
+//
+//    public synchronized SecretKey getReceivedSessionKey() {
+//        while (receivedSessionKey.isEmpty()) {
+//            try {
+//                wait();
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//        return receivedSessionKey.get();
+//    }
 }

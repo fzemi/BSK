@@ -4,15 +4,18 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.security.KeyFactory;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import lombok.Getter;
+import pl.projekt.bsk.Constants;
 import pl.projekt.bsk.KeyStorage;
 import pl.projekt.bsk.utils.EncryptionUtils;
 
 import javax.crypto.spec.IvParameterSpec;
 
-import static pl.projekt.bsk.Constants.BUFFER_SIZE;
+import static pl.projekt.bsk.Constants.*;
 
 public class Sender implements Runnable {
     private Socket socket;
@@ -62,13 +65,14 @@ public class Sender implements Runnable {
                     KeyStorage.getSessionKey(), iv);
 
             InputStream fileBytesEncodedStream = new ByteArrayInputStream(fileBytesEncoded);
-            long fileSize = file.length();
 
-            //TODO dodać wysyłanie typu i nazwy plików
-            byte[] header = ByteBuffer.allocate(Long.BYTES + 16).putLong(fileSize).put(Long.BYTES, iv.getIV()).array();
-            out.write(header);
+            // send encoded file header to client
+            MessageHeader header = new MessageHeader(file.getName(), file.length(), MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_CBC, iv.getIV());
+            byte[] encryptedHeaderBytes = EncryptionUtils.encryptMessageHeader(header, KeyStorage.getSessionKey());
+            sendSize(encryptedHeaderBytes.length);
+            out.write(encryptedHeaderBytes, 0, encryptedHeaderBytes.length);
 
-
+            // send encoded file to client
             byte[] buffer = new byte[BUFFER_SIZE];
             while ((bytes = fileBytesEncodedStream.read(buffer)) != -1) {
                 out.write(buffer, 0, bytes);
@@ -83,8 +87,40 @@ public class Sender implements Runnable {
         }
     }
 
+    private void receiveSessionKey(){
+        try {
+            System.out.println("Sending public key");
+            int publicKeySize = KeyStorage.getPublicKey().getEncoded().length;
+            sendSize(publicKeySize);
+            out.write(KeyStorage.getPublicKey().getEncoded(), 0, publicKeySize);
+            out.flush();
+
+            int encryptedSessionKeySize = receiveSize();
+            byte[] encryptedSessionKeyBytes = new byte[encryptedSessionKeySize];
+            in.read(encryptedSessionKeyBytes, 0, encryptedSessionKeySize);
+
+            KeyStorage.setReceivedSessionKey(Optional.of(EncryptionUtils.decryptSessionKey(encryptedSessionKeyBytes, KeyStorage.getPrivateKey())));
+            System.out.println("Received session key");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void run() {
         startConnection();
+
+        if(KeyStorage.getReceivedSessionKey().isEmpty())
+            receiveSessionKey();
+    }
+
+    private int receiveSize() throws IOException {
+        byte[] sizeBytes = new byte[4];
+        in.read(sizeBytes, 0, 4);
+        return ByteBuffer.wrap(sizeBytes).getInt();
+    }
+
+    private void sendSize(int size) throws IOException {
+        out.write(ByteBuffer.allocate(4).putInt(size).array());
     }
 }
