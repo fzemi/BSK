@@ -11,6 +11,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -22,19 +23,27 @@ public class LogInController {
     private PasswordField passwordField;
 
     @FXML
-    public void onLoginButtonClick() throws IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, NoSuchPaddingException, InvalidKeySpecException {
+    public void onLoginButtonClick() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException,
+            InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException,
+            InvalidKeyException {
         HelloApplication app = new HelloApplication();
         String password = passwordField.getText();
 
-        String sha = EncryptionUtils.createSha256(password);
+        byte[] sha = EncryptionUtils.createSha256(password);
 
         File file = new File(Constants.PASSWORD_SHA_DIR);
-        Scanner scanner = new Scanner(file);
+        byte[] shaFromFile = Files.readAllBytes(file.toPath());
 
-        String passwordSha = scanner.nextLine();
-        scanner.close();
+        boolean correct = true;
 
-        if(!sha.equals(passwordSha)){
+        for(int i = 0; i < shaFromFile.length; i++){
+            if(sha[i] != shaFromFile[i]){
+                correct = false;
+                break;
+            }
+        }
+
+        if(!correct){
             passwordField.setText("");
 
             Alert alert = new Alert(Alert.AlertType.ERROR);

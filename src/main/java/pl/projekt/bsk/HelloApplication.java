@@ -6,8 +6,12 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.stage.Stage;
+import pl.projekt.bsk.utils.EncryptionUtils;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
@@ -36,7 +40,15 @@ public class HelloApplication extends Application {
         stg.sizeToScene();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchAlgorithmException, IOException {
+
+        if(!Files.exists(new File(Constants.PASSWORD_SHA_DIR).toPath())){
+            String password = Constants.PASSWORD;
+            byte[] sha = EncryptionUtils.createSha256(password);
+            File file = new File(Constants.PASSWORD_SHA_DIR);
+            Files.write(file.toPath(), sha);
+        }
+
         launch();
     }
 }

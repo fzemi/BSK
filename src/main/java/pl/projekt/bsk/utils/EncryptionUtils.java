@@ -40,23 +40,14 @@ public class EncryptionUtils {
         return new IvParameterSpec(iv);
     }
 
-    public static String createSha256(String input) throws NoSuchAlgorithmException {
+    public static byte[] createSha256(String input) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-        return bytesToHex(hash);
+        return digest.digest(input.getBytes(StandardCharsets.UTF_8));
     }
 
-    public static String bytesToHex(byte[] hash) {
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : hash) {
-            String hex = Integer.toHexString(0xff & b);
-            if(hex.length() == 1) hexString.append('0');
-            hexString.append(hex);
-        }
-        return hexString.toString();
-    }
-
-    public static void setUpKeys() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public static void setUpKeys() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException,
+            InvalidKeyException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException,
+            InvalidAlgorithmParameterException {
         File privateKeyFile = new File(Constants.PRIVATE_KEY_DIR);
         File publicKeyFile = new File(Constants.PUBLIC_KEY_DIR);
 
@@ -64,8 +55,12 @@ public class EncryptionUtils {
             try {
                 KeyPair keyPair = generateRsaKeyPair();
 
-                //save encrypted private key to file
-                Files.write(privateKeyFile.toPath(), keyPair.getPrivate().getEncoded());
+                //encrypt private key with password
+                byte[] encryptedPrivateKey = encryptData("AES/CBC/PKCS5Padding", keyPair.getPrivate().getEncoded(),
+                        new SecretKeySpec(Files.readAllBytes(new File(Constants.PASSWORD_SHA_DIR).toPath()), "AES"),
+                        Constants.PRIVATE_KEY_IV);
+
+                Files.write(privateKeyFile.toPath(), encryptedPrivateKey);
                 Files.write(publicKeyFile.toPath(), keyPair.getPublic().getEncoded());
 
                 KeyStorage.setPrivateKey(keyPair.getPrivate());
@@ -77,7 +72,12 @@ public class EncryptionUtils {
         }
         else {
             KeyFactory kf = KeyFactory.getInstance("RSA");
-            KeyStorage.setPrivateKey(kf.generatePrivate(new PKCS8EncodedKeySpec(Files.readAllBytes(privateKeyFile.toPath()))));
+
+            byte[] decryptedPrivateKey = decryptData("AES/CBC/PKCS5Padding", Files.readAllBytes(privateKeyFile.toPath()),
+                    new SecretKeySpec(Files.readAllBytes(new File(Constants.PASSWORD_SHA_DIR).toPath()), "AES"),
+                    Constants.PRIVATE_KEY_IV);
+
+            KeyStorage.setPrivateKey(kf.generatePrivate(new PKCS8EncodedKeySpec(decryptedPrivateKey)));
             KeyStorage.setPublicKey(kf.generatePublic(new X509EncodedKeySpec(Files.readAllBytes(publicKeyFile.toPath()))));
         }
     }
