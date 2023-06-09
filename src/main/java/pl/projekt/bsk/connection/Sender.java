@@ -3,9 +3,14 @@ package pl.projekt.bsk.connection;
 import java.io.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.util.stream.Stream;
 
 import lombok.Getter;
+import pl.projekt.bsk.KeyStorage;
+import pl.projekt.bsk.utils.EncryptionUtils;
+
+import javax.crypto.spec.IvParameterSpec;
 
 import static pl.projekt.bsk.Constants.BUFFER_SIZE;
 
@@ -49,21 +54,29 @@ public class Sender implements Runnable {
         int bytes = 0;
 
         try {
-            FileInputStream fileInputStream = new FileInputStream(file);
+            String algorithm = "AES/CBC/PKCS5Padding";
 
+            IvParameterSpec iv = EncryptionUtils.generateIv();
+
+            byte[] fileBytesEncoded = EncryptionUtils.encryptData(algorithm, Files.readAllBytes(file.toPath()),
+                    KeyStorage.getSessionKey(), iv);
+
+            InputStream fileBytesEncodedStream = new ByteArrayInputStream(fileBytesEncoded);
             long fileSize = file.length();
-            byte[] header = ByteBuffer.allocate(Long.BYTES).putLong(fileSize).array();
+
+            //TODO dodać wysyłanie typu i nazwy plików
+            byte[] header = ByteBuffer.allocate(Long.BYTES + 16).putLong(fileSize).put(Long.BYTES, iv.getIV()).array();
             out.write(header);
 
 
             byte[] buffer = new byte[BUFFER_SIZE];
-            while ((bytes = fileInputStream.read(buffer)) != -1) {
+            while ((bytes = fileBytesEncodedStream.read(buffer)) != -1) {
                 out.write(buffer, 0, bytes);
 //                out.flush();
             }
 
 
-            fileInputStream.close();
+            fileBytesEncodedStream.close();
             System.out.println("Koniec wysyłania");
         } catch (FileNotFoundException e) {
             e.printStackTrace();

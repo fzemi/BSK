@@ -25,5 +25,7 @@ public final class Constants {
 
     public static final String PASSWORD = "password";
 
+    //TODO zrobić enuma z typami plików, wysyłać wartości z enuma, a nie stringi
+
     private Constants(){} //Prevents class from being instantiated
 }

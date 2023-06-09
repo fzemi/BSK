@@ -36,3 +36,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+src/main/resources/pl/projekt/bsk/password
+src/main/resources/pl/projekt/bsk/private/key.private
+src/main/resources/pl/projekt/bsk/public/key.public

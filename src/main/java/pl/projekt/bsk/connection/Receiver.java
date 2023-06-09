@@ -1,11 +1,16 @@
 package pl.projekt.bsk.connection;
 
 import lombok.Setter;
+import pl.projekt.bsk.KeyStorage;
+import pl.projekt.bsk.utils.EncryptionUtils;
 
+import javax.crypto.spec.IvParameterSpec;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+
 import static pl.projekt.bsk.Constants.BUFFER_SIZE;
 
 public class Receiver implements Runnable {
@@ -41,17 +46,25 @@ public class Receiver implements Runnable {
 
         DataInputStream dataIn = new DataInputStream(in);
         long fileSize = dataIn.readLong();
+        IvParameterSpec iv = new IvParameterSpec(dataIn.readNBytes(16));
 
         try {
-            FileOutputStream fileOutputStream = new FileOutputStream(receivedFileDirectory + "test.jpg");
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
             // receive file from client
             byte[] buffer = new byte[BUFFER_SIZE];
             while (fileSize > 0 && (bytes = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
-                fileOutputStream.write(buffer, 0, bytes);
+                outputStream.write(buffer, 0, bytes);
 //                fileOutputStream.flush();
             }
-            fileOutputStream.close();
+
+            String algorithm = "AES/CBC/PKCS5Padding";
+            byte[] decodedBytes = EncryptionUtils.decryptData(algorithm, outputStream.toByteArray(),
+                    KeyStorage.getSessionKey(), iv);
+
+            Files.write(new File(receivedFileDirectory + "receivedFile.txt").toPath(), decodedBytes);
+
+            outputStream.close();
 
 
         } catch (FileNotFoundException e) {
