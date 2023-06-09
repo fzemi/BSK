@@ -130,7 +130,7 @@ public class HelloController {
         if (receivedFileDirectory != null) {
             directoryPath.setText(receivedFileDirectory.toString());
         }
-        ((Receiver)receiverRunnable).setReceivedFileDirectory(receivedFileDirectory.getAbsolutePath());
+        ((Receiver)receiverRunnable).setReceivedFileDirectory(receivedFileDirectory.getAbsolutePath() + "\\");
     }
 
     @FXML

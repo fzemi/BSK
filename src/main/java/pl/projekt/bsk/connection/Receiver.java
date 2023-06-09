@@ -36,7 +36,7 @@ public class Receiver implements Runnable {
 
     public Receiver(int port, File receivedFileDirectory) {
         this.port = port;
-        this.receivedFileDirectory = receivedFileDirectory == null ? (System.getProperty("user.home") + "/Downloads/") : receivedFileDirectory.getAbsolutePath();
+        this.receivedFileDirectory = receivedFileDirectory == null ? (System.getProperty("user.home") + "\\Downloads\\") : receivedFileDirectory.getAbsolutePath() + "\\";
     }
 
     public void start() {
@@ -64,18 +64,25 @@ public class Receiver implements Runnable {
             in.read(encryptedHeaderBytes, 0, headerSize);
             MessageHeader header = EncryptionUtils.decryptMessageHeader(encryptedHeaderBytes, KeyStorage.getSessionKey().get());
 
+            System.out.println(header.getFilename() + " " + header.getFileSize());
+
             // receive file from client
             byte[] buffer = new byte[BUFFER_SIZE];
-            while (header.getFileSize() > 0 && (bytes = in.read(buffer, 0, (int) Math.min(buffer.length, header.getFileSize()))) != -1) {
+            while (header.getFileSize() > 0 && outputStream.size() < header.getFileSize() &&
+                    (bytes = in.read(buffer, 0, (int) Math.min(buffer.length, header.getFileSize()))) != -1) {
                 outputStream.write(buffer, 0, bytes);
-//                fileOutputStream.flush();
+                System.out.println("Received " + bytes + " bytes");
+                outputStream.flush();
             }
 
             String algorithm = "AES/CBC/PKCS5Padding";
             byte[] decodedBytes = EncryptionUtils.decryptData(algorithm, outputStream.toByteArray(),
                     KeyStorage.getSessionKey().get(), new IvParameterSpec(header.getIv()));
 
-            Files.write(new File(receivedFileDirectory + header.getFilename()).toPath(), decodedBytes);
+            String path = receivedFileDirectory + header.getFilename();
+            Files.write(new File(path).toPath(), decodedBytes);
+
+            System.out.println("Pobrano plik");
 
             outputStream.close();
 
@@ -128,10 +135,8 @@ public class Receiver implements Runnable {
     public void run() {
         start();
 
-        if (KeyStorage.getSessionKey().isEmpty()) {
-            System.out.println("ESESS");
+        if (KeyStorage.getSessionKey().isEmpty())
             sendSessionKey();
-        }
 
         while(!Thread.interrupted()) {
             try {

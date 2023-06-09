@@ -12,7 +12,7 @@ public final class Constants {
     public static final byte ENCRYPTION_TYPE_ECB = 0;
     public static final byte ENCRYPTION_TYPE_CBC = 1;
 
-    public static final String DEFAULT_FILES_DIR = System.getProperty("user.home") + "/Downloads/";
+    public static final String DEFAULT_FILES_DIR = System.getProperty("user.home") + "\\Downloads\\";
 
     public static final String PRIVATE_KEY_DIR = "src/main/resources/pl/projekt/bsk/private/key.private";
 
@@ -29,8 +29,6 @@ public final class Constants {
     public static final IvParameterSpec PRIVATE_KEY_IV = new IvParameterSpec(ivBytes);
 
     public static final String PASSWORD = "password";
-
-    //TODO zrobić enuma z typami plików, wysyłać wartości z enuma, a nie stringi
 
     private Constants(){} //Prevents class from being instantiated
 }
