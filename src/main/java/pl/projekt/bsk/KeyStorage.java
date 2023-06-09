@@ -24,22 +24,22 @@ public class KeyStorage {
 
     @Getter(onMethod_={@Synchronized})
     @Setter(onMethod_={@Synchronized})
-    private static SecretKey sessionKey;
+    private static Optional<SecretKey> sessionKey;
 
     @Getter(onMethod_={@Synchronized})
     @Setter(onMethod_={@Synchronized})
     private static Optional<PublicKey> receivedPublicKey;
 
-    @Getter(onMethod_={@Synchronized})
-    @Setter(onMethod_={@Synchronized})
-    private static Optional<SecretKey> receivedSessionKey;
+//    @Getter(onMethod_={@Synchronized})
+//    @Setter(onMethod_={@Synchronized})
+//    private static Optional<SecretKey> receivedSessionKey;
 
     public KeyStorage(KeyPair keyPair, SecretKey sessionKey) {
         publicKey = keyPair.getPublic();
         privateKey = keyPair.getPrivate();
-        KeyStorage.sessionKey = sessionKey;
+//        KeyStorage.sessionKey = sessionKey;
         receivedPublicKey = Optional.empty();
-        receivedSessionKey = Optional.empty();
+//        receivedSessionKey = Optional.empty();
     }
 
 //    public static synchronized void setReceivedPublicKey(PublicKey receivedPublicKey) {

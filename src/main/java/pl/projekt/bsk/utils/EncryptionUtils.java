@@ -61,7 +61,7 @@ public class EncryptionUtils {
 
                 KeyStorage.setPrivateKey(keyPair.getPrivate());
                 KeyStorage.setPublicKey(keyPair.getPublic());
-                KeyStorage.setReceivedSessionKey(Optional.empty());
+                KeyStorage.setSessionKey(Optional.empty());
                 KeyStorage.setReceivedPublicKey(Optional.empty());
 
             } catch (IOException | NoSuchAlgorithmException e) {
@@ -77,6 +77,8 @@ public class EncryptionUtils {
 
             KeyStorage.setPrivateKey(kf.generatePrivate(new PKCS8EncodedKeySpec(decryptedPrivateKey)));
             KeyStorage.setPublicKey(kf.generatePublic(new X509EncodedKeySpec(Files.readAllBytes(publicKeyFile.toPath()))));
+            KeyStorage.setSessionKey(Optional.empty());
+            KeyStorage.setReceivedPublicKey(Optional.empty());
         }
     }
 

@@ -47,6 +47,7 @@ public class Receiver implements Runnable {
             in = socket.getInputStream();
             out = socket.getOutputStream();
             out.write("connected".getBytes(StandardCharsets.UTF_8), 0, 9);
+            out.flush();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -61,7 +62,7 @@ public class Receiver implements Runnable {
             int headerSize = receiveSize();
             byte[] encryptedHeaderBytes = new byte[headerSize];
             in.read(encryptedHeaderBytes, 0, headerSize);
-            MessageHeader header = EncryptionUtils.decryptMessageHeader(encryptedHeaderBytes, KeyStorage.getSessionKey());
+            MessageHeader header = EncryptionUtils.decryptMessageHeader(encryptedHeaderBytes, KeyStorage.getSessionKey().get());
 
             // receive file from client
             byte[] buffer = new byte[BUFFER_SIZE];
@@ -72,7 +73,7 @@ public class Receiver implements Runnable {
 
             String algorithm = "AES/CBC/PKCS5Padding";
             byte[] decodedBytes = EncryptionUtils.decryptData(algorithm, outputStream.toByteArray(),
-                    KeyStorage.getSessionKey(), new IvParameterSpec(header.getIv()));
+                    KeyStorage.getSessionKey().get(), new IvParameterSpec(header.getIv()));
 
             Files.write(new File(receivedFileDirectory + header.getFilename()).toPath(), decodedBytes);
 
@@ -96,9 +97,9 @@ public class Receiver implements Runnable {
             KeyStorage.setReceivedPublicKey(Optional.ofNullable(kf.generatePublic(new X509EncodedKeySpec(publicKeyBytes))));
 
             SecretKey sessionKey = EncryptionUtils.generateKey();
-            KeyStorage.setSessionKey(sessionKey);
+            KeyStorage.setSessionKey(Optional.of(sessionKey));
 
-            byte[] encodedSessionKeyBytes = EncryptionUtils.encryptSessionKey(KeyStorage.getSessionKey(),
+            byte[] encodedSessionKeyBytes = EncryptionUtils.encryptSessionKey(KeyStorage.getSessionKey().get(),
                     KeyStorage.getReceivedPublicKey().get());
 
             sendSize(encodedSessionKeyBytes.length);
@@ -127,10 +128,11 @@ public class Receiver implements Runnable {
     public void run() {
         start();
 
-        if (KeyStorage.getReceivedSessionKey().isEmpty()) {
+        if (KeyStorage.getSessionKey().isEmpty()) {
             System.out.println("ESESS");
             sendSessionKey();
         }
+
         while(!Thread.interrupted()) {
             try {
                 receiveFile();

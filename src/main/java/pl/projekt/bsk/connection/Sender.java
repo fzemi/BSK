@@ -62,13 +62,13 @@ public class Sender implements Runnable {
             IvParameterSpec iv = EncryptionUtils.generateIv();
 
             byte[] fileBytesEncoded = EncryptionUtils.encryptData(algorithm, Files.readAllBytes(file.toPath()),
-                    KeyStorage.getSessionKey(), iv);
+                    KeyStorage.getSessionKey().get(), iv);
 
             InputStream fileBytesEncodedStream = new ByteArrayInputStream(fileBytesEncoded);
 
             // send encoded file header to client
             MessageHeader header = new MessageHeader(file.getName(), file.length(), MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_CBC, iv.getIV());
-            byte[] encryptedHeaderBytes = EncryptionUtils.encryptMessageHeader(header, KeyStorage.getSessionKey());
+            byte[] encryptedHeaderBytes = EncryptionUtils.encryptMessageHeader(header, KeyStorage.getSessionKey().get());
             sendSize(encryptedHeaderBytes.length);
             out.write(encryptedHeaderBytes, 0, encryptedHeaderBytes.length);
 
@@ -99,7 +99,7 @@ public class Sender implements Runnable {
             byte[] encryptedSessionKeyBytes = new byte[encryptedSessionKeySize];
             in.read(encryptedSessionKeyBytes, 0, encryptedSessionKeySize);
 
-            KeyStorage.setReceivedSessionKey(Optional.of(EncryptionUtils.decryptSessionKey(encryptedSessionKeyBytes, KeyStorage.getPrivateKey())));
+            KeyStorage.setSessionKey(Optional.of(EncryptionUtils.decryptSessionKey(encryptedSessionKeyBytes, KeyStorage.getPrivateKey())));
             System.out.println("Received session key");
         } catch (Exception e) {
             e.printStackTrace();
@@ -110,7 +110,7 @@ public class Sender implements Runnable {
     public void run() {
         startConnection();
 
-        if(KeyStorage.getReceivedSessionKey().isEmpty())
+        if(KeyStorage.getSessionKey().isEmpty())
             receiveSessionKey();
     }
 
