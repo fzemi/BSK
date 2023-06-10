@@ -74,9 +74,9 @@ public class Sender implements Runnable {
             InputStream fileBytesEncodedStream = new ByteArrayInputStream(fileBytesEncoded);
 
             // send encoded file header to client
-            String encryptedHeaderBase64 = EncryptionUtils.encryptMessageHeader(header, KeyStorage.getSessionKey().get());
-            sendSize(encryptedHeaderBase64.length());
-            out.write(encryptedHeaderBase64.getBytes(), 0, encryptedHeaderBase64.length());
+            byte[] encryptedHeaderBytes = EncryptionUtils.encryptMessageHeader(header, KeyStorage.getSessionKey().get());
+            sendSize(encryptedHeaderBytes.length);
+            out.write(encryptedHeaderBytes, 0, encryptedHeaderBytes.length);
 
             // send encoded file to client
             byte[] buffer = new byte[BUFFER_SIZE];

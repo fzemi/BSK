@@ -14,8 +14,8 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 import java.util.Optional;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class EncryptionUtils {
 
@@ -123,36 +123,27 @@ public class EncryptionUtils {
         return new SecretKeySpec(sessionKeyBytes, 0, sessionKeyBytes.length, "AES");
     }
 
-    public static String encryptMessageHeader(MessageHeader header, SecretKey sessionKey) throws IOException, NoSuchPaddingException,
+    public static byte[] encryptMessageHeader(MessageHeader header, SecretKey sessionKey) throws IOException, NoSuchPaddingException,
             NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(bos);
-        oos.writeObject(header);
-        oos.flush();
-        oos.close();
-        bos.close();
 
-        byte[] headerBytes = bos.toByteArray();
+        ObjectMapper mapper = new ObjectMapper();
+        String messageHeaderString = mapper.writeValueAsString(header);
+
         Cipher encrpytor = Cipher.getInstance("AES/ECB/PKCS5Padding");
         encrpytor.init(Cipher.ENCRYPT_MODE, sessionKey);
-        byte[] ecryptedBytes = encrpytor.doFinal(headerBytes);
 
-        return Base64.getEncoder().encodeToString(ecryptedBytes);
+        byte[] headerBytes = messageHeaderString.getBytes(StandardCharsets.UTF_8);
+
+        return encrpytor.doFinal(headerBytes);
     }
 
-    public static MessageHeader decryptMessageHeader(String base64Ciphertext, SecretKey sessionKey) throws IOException, NoSuchPaddingException,
-            NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, ClassNotFoundException {
-
-        byte[] ciphertext = Base64.getDecoder().decode(base64Ciphertext);
-
+    public static MessageHeader decryptMessageHeader(byte[] ciphertext, SecretKey sessionKey) throws IOException, NoSuchPaddingException,
+            NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         Cipher decryptor = Cipher.getInstance("AES/ECB/PKCS5Padding");
         decryptor.init(Cipher.DECRYPT_MODE, sessionKey);
         byte[] headerBytes = decryptor.doFinal(ciphertext);
-        ByteArrayInputStream bis = new ByteArrayInputStream(headerBytes);
-        ObjectInputStream ois = new ObjectInputStream(bis);
-        MessageHeader header = (MessageHeader) ois.readObject();
-        ois.close();
-        bis.close();
-        return header;
+        String messageHeaderString = new String(headerBytes, StandardCharsets.UTF_8);
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(messageHeaderString, MessageHeader.class);
     }
 }

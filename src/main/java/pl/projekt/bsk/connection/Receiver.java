@@ -22,7 +22,6 @@ import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 import java.util.Optional;
 
 import static pl.projekt.bsk.Constants.BUFFER_SIZE;
@@ -67,10 +66,8 @@ public class Receiver implements Runnable {
             int headerSize = receiveSize();
             byte[] encryptedHeaderBytes = new byte[headerSize];
             in.read(encryptedHeaderBytes, 0, headerSize);
-
-            String encryptedHeaderBase64 = new String(encryptedHeaderBytes);
-
-            MessageHeader header = EncryptionUtils.decryptMessageHeader(encryptedHeaderBase64, KeyStorage.getSessionKey().get());
+            
+            MessageHeader header = EncryptionUtils.decryptMessageHeader(encryptedHeaderBytes, KeyStorage.getSessionKey().get());
 
             System.out.println(header.getFilename() + " " + header.getFileSize());
 
