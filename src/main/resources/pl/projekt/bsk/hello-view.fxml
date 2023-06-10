@@ -24,5 +24,12 @@
       <Label layoutX="322.0" layoutY="83.0" text="Directory for downloaded files:" />
       <Circle fx:id="connectionStatus" fill="RED" layoutX="117.0" layoutY="387.0" radius="6.0" stroke="BLACK" strokeType="INSIDE" />
       <ProgressBar fx:id="progressBar" layoutX="186.0" layoutY="313.0" prefWidth="200.0" progress="0.0" />
+      <RadioButton fx:id="rButtonCBC" layoutX="35.0" layoutY="240.0" mnemonicParsing="false" onAction="#setCipherMode" selected="true" text="CBC">
+         <toggleGroup>
+            <ToggleGroup fx:id="cipher" />
+         </toggleGroup>
+      </RadioButton>
+      <RadioButton fx:id="rButtonECB" layoutX="35.0" layoutY="261.0" mnemonicParsing="false" onAction="#setCipherMode" text="ECB" toggleGroup="$cipher" />
+      <Label layoutX="18.0" layoutY="222.0" text="Block cipher mode:" />
    </children>
 </AnchorPane>

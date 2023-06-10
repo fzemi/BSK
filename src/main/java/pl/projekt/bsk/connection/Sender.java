@@ -53,21 +53,27 @@ public class Sender implements Runnable {
         }
     }
 
-    public void sendFile(File file) throws Exception {
+    public void sendFile(File file, String cipherMode) throws Exception {
         int bytes = 0;
 
         try {
-            String algorithm = "AES/CBC/PKCS5Padding";
+            byte[] fileBytesEncoded;
+            MessageHeader header;
 
-            IvParameterSpec iv = EncryptionUtils.generateIv();
-
-            byte[] fileBytesEncoded = EncryptionUtils.encryptData(algorithm, Files.readAllBytes(file.toPath()),
-                    KeyStorage.getSessionKey().get(), iv);
+            if(cipherMode.equals("AES/CBC/PKCS5Padding")) {
+                IvParameterSpec iv = EncryptionUtils.generateIv();
+                fileBytesEncoded = EncryptionUtils.encryptData(cipherMode, Files.readAllBytes(file.toPath()),
+                        KeyStorage.getSessionKey().get(), iv);
+                header = new MessageHeader(file.getName(), file.length(), MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_CBC, iv.getIV());
+            } else {
+                fileBytesEncoded = EncryptionUtils.encryptData(cipherMode, Files.readAllBytes(file.toPath()),
+                        KeyStorage.getSessionKey().get(), null);
+                header = new MessageHeader(file.getName(), file.length(), MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_ECB, null);
+            }
 
             InputStream fileBytesEncodedStream = new ByteArrayInputStream(fileBytesEncoded);
 
             // send encoded file header to client
-            MessageHeader header = new MessageHeader(file.getName(), file.length(), MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_CBC, iv.getIV());
             byte[] encryptedHeaderBytes = EncryptionUtils.encryptMessageHeader(header, KeyStorage.getSessionKey().get());
             sendSize(encryptedHeaderBytes.length);
             out.write(encryptedHeaderBytes, 0, encryptedHeaderBytes.length);

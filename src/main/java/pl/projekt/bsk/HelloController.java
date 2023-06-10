@@ -41,9 +41,11 @@ public class HelloController {
     private Circle connectionStatus;
     @FXML
     private ProgressBar progressBar;
+    @FXML
+    private RadioButton rButtonCBC, rButtonECB;
 
     private int serverPort;
-
+    private String cipherMode = "AES/CBC/PKCS5Padding";
     private Runnable senderRunnable;
     private Runnable receiverRunnable;
     private File selectedFile;
@@ -142,7 +144,15 @@ public class HelloController {
             alert.setContentText("Please choose file");
             alert.showAndWait();
         }else{
-            ((Sender)senderRunnable).sendFile(selectedFile);
+            ((Sender)senderRunnable).sendFile(selectedFile, cipherMode);
         }
+    }
+
+    @FXML
+    public void setCipherMode(ActionEvent e) {
+        if(rButtonCBC.isSelected())
+            cipherMode = "AES/CBC/PKCS5Padding";
+        else
+            cipherMode = "AES/ECB/PKCS5Padding";
     }
 }

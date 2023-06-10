@@ -1,6 +1,7 @@
 package pl.projekt.bsk.connection;
 
 import lombok.Setter;
+import pl.projekt.bsk.Constants;
 import pl.projekt.bsk.KeyStorage;
 import pl.projekt.bsk.utils.EncryptionUtils;
 
@@ -75,9 +76,14 @@ public class Receiver implements Runnable {
                 outputStream.flush();
             }
 
-            String algorithm = "AES/CBC/PKCS5Padding";
-            byte[] decodedBytes = EncryptionUtils.decryptData(algorithm, outputStream.toByteArray(),
-                    KeyStorage.getSessionKey().get(), new IvParameterSpec(header.getIv()));
+            byte[] decodedBytes;
+            if(header.getEncryptionMethod() == Constants.ENCRYPTION_TYPE_CBC) {
+                decodedBytes = EncryptionUtils.decryptData("AES/CBC/PKCS5Padding", outputStream.toByteArray(),
+                        KeyStorage.getSessionKey().get(), new IvParameterSpec(header.getIv()));
+            } else {
+                decodedBytes = EncryptionUtils.decryptData("AES/ECB/PKCS5Padding", outputStream.toByteArray(),
+                        KeyStorage.getSessionKey().get(), null);
+            }
 
             String path = receivedFileDirectory + header.getFilename();
             Files.write(new File(path).toPath(), decodedBytes);
@@ -85,8 +91,6 @@ public class Receiver implements Runnable {
             System.out.println("Pobrano plik");
 
             outputStream.close();
-
-
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

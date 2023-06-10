@@ -34,6 +34,7 @@ public class HelloApplication extends Application {
         Parent pane = FXMLLoader.load(getClass().getResource(fxml));
         stg.getScene().setRoot(pane);
         stg.sizeToScene();
+        stg.centerOnScreen();
     }
 
     public static void main(String[] args) throws NoSuchAlgorithmException, IOException {
