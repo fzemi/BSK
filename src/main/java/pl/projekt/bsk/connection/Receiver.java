@@ -76,13 +76,8 @@ public class Receiver implements Runnable {
             long fileSize = header.getFileSize();
             progressBar.setStyle("-fx-accent: blue;");
 
-            int bufferSize = BUFFER_SIZE;
-
-            if(fileSize < BUFFER_SIZE)
-                bufferSize = (int) fileSize;
-
             // receive file from client
-            byte[] buffer = new byte[bufferSize];
+            byte[] buffer = new byte[BUFFER_SIZE];
             while (fileSize > 0 && outputStream.size() < fileSize &&
                     (bytes = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
                 outputStream.write(buffer, 0, bytes);

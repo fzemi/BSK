@@ -64,11 +64,11 @@ public class Sender implements Runnable {
                 IvParameterSpec iv = EncryptionUtils.generateIv();
                 fileBytesEncoded = EncryptionUtils.encryptData(cipherMode, Files.readAllBytes(file.toPath()),
                         KeyStorage.getSessionKey().get(), iv);
-                header = new MessageHeader(file.getName(), file.length(), MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_CBC, iv.getIV());
+                header = new MessageHeader(file.getName(), fileBytesEncoded.length, MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_CBC, iv.getIV());
             } else {
                 fileBytesEncoded = EncryptionUtils.encryptData(cipherMode, Files.readAllBytes(file.toPath()),
                         KeyStorage.getSessionKey().get(), null);
-                header = new MessageHeader(file.getName(), file.length(), MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_ECB, null);
+                header = new MessageHeader(file.getName(), fileBytesEncoded.length, MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_ECB, null);
             }
 
             InputStream fileBytesEncodedStream = new ByteArrayInputStream(fileBytesEncoded);
@@ -78,13 +78,8 @@ public class Sender implements Runnable {
             sendSize(encryptedHeaderBytes.length);
             out.write(encryptedHeaderBytes, 0, encryptedHeaderBytes.length);
 
-            int bufferSize = BUFFER_SIZE;
-
-            if(header.getFileSize() < BUFFER_SIZE)
-                bufferSize = (int) header.getFileSize();
-
             // send encoded file to client
-            byte[] buffer = new byte[bufferSize];
+            byte[] buffer = new byte[BUFFER_SIZE];
             while ((bytes = fileBytesEncodedStream.read(buffer)) != -1) {
                 out.write(buffer, 0, bytes);
 //                out.flush();
