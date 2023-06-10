@@ -7,4 +7,5 @@ module pl.projekt.bsk {
 
     opens pl.projekt.bsk to javafx.fxml;
     exports pl.projekt.bsk;
+    exports pl.projekt.bsk.connection;
 }

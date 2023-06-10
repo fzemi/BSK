@@ -66,20 +66,28 @@ public class Receiver implements Runnable {
             int headerSize = receiveSize();
             byte[] encryptedHeaderBytes = new byte[headerSize];
             in.read(encryptedHeaderBytes, 0, headerSize);
-            
+
+            System.out.println("Received header size: " + headerSize);
+
             MessageHeader header = EncryptionUtils.decryptMessageHeader(encryptedHeaderBytes, KeyStorage.getSessionKey().get());
 
             System.out.println(header.getFilename() + " " + header.getFileSize());
 
             long fileSize = header.getFileSize();
+            progressBar.setStyle("-fx-accent: blue;");
+
+            int bufferSize = BUFFER_SIZE;
+
+            if(fileSize < BUFFER_SIZE)
+                bufferSize = (int) fileSize;
 
             // receive file from client
-            byte[] buffer = new byte[BUFFER_SIZE];
+            byte[] buffer = new byte[bufferSize];
             while (fileSize > 0 && outputStream.size() < fileSize &&
                     (bytes = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
                 outputStream.write(buffer, 0, bytes);
                 progressBar.setProgress(outputStream.size() / (double) fileSize);
-                System.out.println("Received " + bytes + " bytes");
+                //System.out.println("Received " + bytes + " bytes");
                 outputStream.flush();
             }
 

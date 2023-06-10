@@ -42,7 +42,7 @@ public class HelloController {
     @FXML
     private ProgressBar progressBar;
     @FXML
-    private RadioButton rButtonCBC, rButtonECB;
+    private RadioButton rButtonCBC;
 
     private int serverPort;
     private String cipherMode = "AES/CBC/PKCS5Padding";

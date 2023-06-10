@@ -78,13 +78,17 @@ public class Sender implements Runnable {
             sendSize(encryptedHeaderBytes.length);
             out.write(encryptedHeaderBytes, 0, encryptedHeaderBytes.length);
 
+            int bufferSize = BUFFER_SIZE;
+
+            if(header.getFileSize() < BUFFER_SIZE)
+                bufferSize = (int) header.getFileSize();
+
             // send encoded file to client
-            byte[] buffer = new byte[BUFFER_SIZE];
+            byte[] buffer = new byte[bufferSize];
             while ((bytes = fileBytesEncodedStream.read(buffer)) != -1) {
                 out.write(buffer, 0, bytes);
 //                out.flush();
             }
-
 
             fileBytesEncodedStream.close();
             System.out.println("Koniec wysyłania");
