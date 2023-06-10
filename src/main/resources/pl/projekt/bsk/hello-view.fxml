@@ -10,20 +10,20 @@
       <TextField fx:id="targetIPInput" layoutX="14.0" layoutY="24.0" promptText="TargetIP:Port" />
       <TextField fx:id="serverPortField" layoutX="322.0" layoutY="24.0" prefHeight="25.0" prefWidth="81.0" promptText="ServerPort" />
       <TextField fx:id="filePath" layoutX="14.0" layoutY="161.0" />
-      <TextField fx:id="directoryPath" layoutX="322.0" layoutY="101.0" />
+      <TextField fx:id="directoryPath" layoutX="14.0" layoutY="95.0" />
       <Button fx:id="runButton" layoutX="412.0" layoutY="24.0" mnemonicParsing="false" onAction="#onRunButtonClick" text="Run" />
       <Button fx:id="connectButton" layoutX="173.0" layoutY="24.0" mnemonicParsing="false" onAction="#onConnectButtonClick" text="Connect" />
       <Button fx:id="chooseFileButton" layoutX="173.0" layoutY="161.0" mnemonicParsing="false" onAction="#onChooseFileButtonClick" text="Choose file" />
       <Button fx:id="sendButton" disable="true" layoutX="177.0" layoutY="197.0" mnemonicParsing="false" onAction="#onSendButtonClick" text="Send" />
-      <Button layoutX="485.0" layoutY="101.0" mnemonicParsing="false" onAction="#onChooseDirectoryClick" text="Choose directory" />
+      <Button layoutX="177.0" layoutY="95.0" mnemonicParsing="false" onAction="#onChooseDirectoryClick" text="Choose directory" />
       <Label layoutX="14.0" layoutY="6.0" text="Destination address:" />
       <Label layoutX="322.0" layoutY="6.0" text="Source port:" />
       <Label layoutX="6.0" layoutY="377.0" text="Connection status:" />
       <Label layoutX="14.0" layoutY="144.0" text="Selected file to be send:" />
       <Label fx:id="runStatusLabel" disable="true" layoutX="358.0" layoutY="54.0" prefHeight="17.0" prefWidth="161.0" />
-      <Label layoutX="322.0" layoutY="83.0" text="Directory for downloaded files:" />
+      <Label layoutX="14.0" layoutY="77.0" text="Directory for downloaded files:" />
       <Circle fx:id="connectionStatus" fill="RED" layoutX="117.0" layoutY="387.0" radius="6.0" stroke="BLACK" strokeType="INSIDE" />
-      <ProgressBar fx:id="progressBar" layoutX="186.0" layoutY="313.0" prefWidth="200.0" progress="0.0" />
+      <ProgressBar fx:id="progressBar" layoutX="17.0" layoutY="312.0" prefWidth="200.0" progress="0.0" />
       <RadioButton fx:id="rButtonCBC" layoutX="35.0" layoutY="240.0" mnemonicParsing="false" onAction="#setCipherMode" selected="true" text="CBC">
          <toggleGroup>
             <ToggleGroup fx:id="cipher" />
@@ -31,5 +31,6 @@
       </RadioButton>
       <RadioButton fx:id="rButtonECB" layoutX="35.0" layoutY="261.0" mnemonicParsing="false" onAction="#setCipherMode" text="ECB" toggleGroup="$cipher" />
       <Label layoutX="18.0" layoutY="222.0" text="Block cipher mode:" />
+      <Label layoutX="61.0" layoutY="295.0" text="Download progress" />
    </children>
 </AnchorPane>

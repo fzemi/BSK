@@ -14,6 +14,7 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.Optional;
 
 public class EncryptionUtils {
@@ -122,7 +123,7 @@ public class EncryptionUtils {
         return new SecretKeySpec(sessionKeyBytes, 0, sessionKeyBytes.length, "AES");
     }
 
-    public static byte[] encryptMessageHeader(MessageHeader header, SecretKey sessionKey) throws IOException, NoSuchPaddingException,
+    public static String encryptMessageHeader(MessageHeader header, SecretKey sessionKey) throws IOException, NoSuchPaddingException,
             NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bos);
@@ -134,11 +135,16 @@ public class EncryptionUtils {
         byte[] headerBytes = bos.toByteArray();
         Cipher encrpytor = Cipher.getInstance("AES/ECB/PKCS5Padding");
         encrpytor.init(Cipher.ENCRYPT_MODE, sessionKey);
-        return encrpytor.doFinal(headerBytes);
+        byte[] ecryptedBytes = encrpytor.doFinal(headerBytes);
+
+        return Base64.getEncoder().encodeToString(ecryptedBytes);
     }
 
-    public static MessageHeader decryptMessageHeader(byte[] ciphertext, SecretKey sessionKey) throws IOException, NoSuchPaddingException,
+    public static MessageHeader decryptMessageHeader(String base64Ciphertext, SecretKey sessionKey) throws IOException, NoSuchPaddingException,
             NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, ClassNotFoundException {
+
+        byte[] ciphertext = Base64.getDecoder().decode(base64Ciphertext);
+
         Cipher decryptor = Cipher.getInstance("AES/ECB/PKCS5Padding");
         decryptor.init(Cipher.DECRYPT_MODE, sessionKey);
         byte[] headerBytes = decryptor.doFinal(ciphertext);

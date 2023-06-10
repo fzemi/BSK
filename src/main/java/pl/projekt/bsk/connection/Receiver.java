@@ -1,5 +1,6 @@
 package pl.projekt.bsk.connection;
 
+import javafx.scene.control.ProgressBar;
 import lombok.Setter;
 import pl.projekt.bsk.Constants;
 import pl.projekt.bsk.KeyStorage;
@@ -21,6 +22,7 @@ import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.Optional;
 
 import static pl.projekt.bsk.Constants.BUFFER_SIZE;
@@ -34,10 +36,12 @@ public class Receiver implements Runnable {
 
     @Setter
     private String receivedFileDirectory;
+    private ProgressBar progressBar;
 
-    public Receiver(int port, File receivedFileDirectory) {
+    public Receiver(int port, File receivedFileDirectory, ProgressBar progressBar) {
         this.port = port;
         this.receivedFileDirectory = receivedFileDirectory == null ? (System.getProperty("user.home") + "\\Downloads\\") : receivedFileDirectory.getAbsolutePath() + "\\";
+        this.progressBar = progressBar;
     }
 
     public void start() {
@@ -63,18 +67,27 @@ public class Receiver implements Runnable {
             int headerSize = receiveSize();
             byte[] encryptedHeaderBytes = new byte[headerSize];
             in.read(encryptedHeaderBytes, 0, headerSize);
-            MessageHeader header = EncryptionUtils.decryptMessageHeader(encryptedHeaderBytes, KeyStorage.getSessionKey().get());
+
+            String encryptedHeaderBase64 = new String(encryptedHeaderBytes);
+
+            MessageHeader header = EncryptionUtils.decryptMessageHeader(encryptedHeaderBase64, KeyStorage.getSessionKey().get());
 
             System.out.println(header.getFilename() + " " + header.getFileSize());
 
+            long fileSize = header.getFileSize();
+
             // receive file from client
             byte[] buffer = new byte[BUFFER_SIZE];
-            while (header.getFileSize() > 0 && outputStream.size() < header.getFileSize() &&
-                    (bytes = in.read(buffer, 0, (int) Math.min(buffer.length, header.getFileSize()))) != -1) {
+            while (fileSize > 0 && outputStream.size() < fileSize &&
+                    (bytes = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
                 outputStream.write(buffer, 0, bytes);
+                progressBar.setProgress(outputStream.size() / (double) fileSize);
                 System.out.println("Received " + bytes + " bytes");
                 outputStream.flush();
             }
+
+            progressBar.setProgress(1);
+            progressBar.setStyle("-fx-accent: green;");
 
             byte[] decodedBytes;
             if(header.getEncryptionMethod() == Constants.ENCRYPTION_TYPE_CBC) {

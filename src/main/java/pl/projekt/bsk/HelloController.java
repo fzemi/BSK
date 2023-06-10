@@ -62,7 +62,7 @@ public class HelloController {
             alert.showAndWait();
         }else {
             serverPort = Integer.parseInt(serverPortField.getText());
-            receiverRunnable = new Receiver(serverPort, receivedFileDirectory);
+            receiverRunnable = new Receiver(serverPort, receivedFileDirectory, progressBar);
             Thread receiverThread = new Thread(receiverRunnable);
             receiverThread.setDaemon(true);
             receiverThread.start();
