@@ -8,6 +8,7 @@ import java.security.KeyFactory;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import javafx.concurrent.Task;
 import lombok.Getter;
 import pl.projekt.bsk.Constants;
 import pl.projekt.bsk.KeyStorage;
@@ -53,43 +54,50 @@ public class Sender implements Runnable {
         }
     }
 
-    public void sendFile(File file, String cipherMode) throws Exception {
-        int bytes = 0;
+    public void sendFile(File file, String cipherMode) {
+        Task<Void> task = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                int bytes = 0;
 
-        try {
-            byte[] fileBytesEncoded;
-            MessageHeader header;
+                try {
+                    byte[] fileBytesEncoded;
+                    MessageHeader header;
 
-            if(cipherMode.equals("AES/CBC/PKCS5Padding")) {
-                IvParameterSpec iv = EncryptionUtils.generateIv();
-                fileBytesEncoded = EncryptionUtils.encryptData(cipherMode, Files.readAllBytes(file.toPath()),
-                        KeyStorage.getSessionKey().get(), iv);
-                header = new MessageHeader(file.getName(), fileBytesEncoded.length, MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_CBC, iv.getIV());
-            } else {
-                fileBytesEncoded = EncryptionUtils.encryptData(cipherMode, Files.readAllBytes(file.toPath()),
-                        KeyStorage.getSessionKey().get(), null);
-                header = new MessageHeader(file.getName(), fileBytesEncoded.length, MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_ECB, null);
-            }
+                    if(cipherMode.equals("AES/CBC/PKCS5Padding")) {
+                        IvParameterSpec iv = EncryptionUtils.generateIv();
+                        fileBytesEncoded = EncryptionUtils.encryptData(cipherMode, Files.readAllBytes(file.toPath()),
+                                KeyStorage.getSessionKey().get(), iv);
+                        header = new MessageHeader(file.getName(), fileBytesEncoded.length, MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_CBC, iv.getIV());
+                    } else {
+                        fileBytesEncoded = EncryptionUtils.encryptData(cipherMode, Files.readAllBytes(file.toPath()),
+                                KeyStorage.getSessionKey().get(), null);
+                        header = new MessageHeader(file.getName(), fileBytesEncoded.length, MESSAGE_TYPE_FILE, ENCRYPTION_TYPE_ECB, null);
+                    }
 
-            InputStream fileBytesEncodedStream = new ByteArrayInputStream(fileBytesEncoded);
+                    InputStream fileBytesEncodedStream = new ByteArrayInputStream(fileBytesEncoded);
 
-            // send encoded file header to client
-            byte[] encryptedHeaderBytes = EncryptionUtils.encryptMessageHeader(header, KeyStorage.getSessionKey().get());
-            sendSize(encryptedHeaderBytes.length);
-            out.write(encryptedHeaderBytes, 0, encryptedHeaderBytes.length);
+                    // send encoded file header to client
+                    byte[] encryptedHeaderBytes = EncryptionUtils.encryptMessageHeader(header, KeyStorage.getSessionKey().get());
+                    sendSize(encryptedHeaderBytes.length);
+                    out.write(encryptedHeaderBytes, 0, encryptedHeaderBytes.length);
 
-            // send encoded file to client
-            byte[] buffer = new byte[BUFFER_SIZE];
-            while ((bytes = fileBytesEncodedStream.read(buffer)) != -1) {
-                out.write(buffer, 0, bytes);
+                    // send encoded file to client
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    while ((bytes = fileBytesEncodedStream.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytes);
 //                out.flush();
-            }
+                    }
 
-            fileBytesEncodedStream.close();
-            System.out.println("Koniec wysyłania");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+                    fileBytesEncodedStream.close();
+                    System.out.println("Koniec wysyłania");
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        };
+        new Thread(task).start();
     }
 
     private void receiveSessionKey(){
