@@ -1,6 +1,8 @@
 package pl.projekt.bsk.connection;
 
+import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TextArea;
 import lombok.Setter;
 import pl.projekt.bsk.Constants;
 import pl.projekt.bsk.KeyStorage;
@@ -25,6 +27,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Optional;
 
 import static pl.projekt.bsk.Constants.BUFFER_SIZE;
+import static pl.projekt.bsk.Constants.MESSAGE_TYPE_FILE;
 
 public class Receiver implements Runnable {
     private ServerSocket serverSocket;
@@ -36,11 +39,13 @@ public class Receiver implements Runnable {
     @Setter
     private String receivedFileDirectory;
     private ProgressBar progressBar;
+    private TextArea receivedText;
 
-    public Receiver(int port, File receivedFileDirectory, ProgressBar progressBar) {
+    public Receiver(int port, File receivedFileDirectory, ProgressBar progressBar, TextArea textArea) {
         this.port = port;
         this.receivedFileDirectory = receivedFileDirectory == null ? (System.getProperty("user.home") + "\\Downloads\\") : receivedFileDirectory.getAbsolutePath() + "\\";
         this.progressBar = progressBar;
+        this.receivedText = textArea;
     }
 
     public void start() {
@@ -71,7 +76,7 @@ public class Receiver implements Runnable {
 
             MessageHeader header = EncryptionUtils.decryptMessageHeader(encryptedHeaderBytes, KeyStorage.getSessionKey().get());
 
-            System.out.println(header.getFilename() + " " + header.getFileSize());
+            System.out.println(header.getFilename() == null ? "Text " : header.getFilename() + " " + header.getFileSize());
 
             long fileSize = header.getFileSize();
             progressBar.setStyle("-fx-accent: blue;");
@@ -98,10 +103,16 @@ public class Receiver implements Runnable {
                         KeyStorage.getSessionKey().get(), null);
             }
 
-            String path = receivedFileDirectory + header.getFilename();
-            Files.write(new File(path).toPath(), decodedBytes);
+            if(header.getMessageType() == MESSAGE_TYPE_FILE){
+                String path = receivedFileDirectory + header.getFilename();
+                Files.write(new File(path).toPath(), decodedBytes);
 
-            System.out.println("Pobrano plik");
+                System.out.println("Pobrano plik");
+            } else if (header.getMessageType() == Constants.MESSAGE_TYPE_TEXT) {
+                receivedText.setText(new String(decodedBytes, StandardCharsets.UTF_8));
+                System.out.println("Pobrano tekst");
+
+            }
 
             outputStream.close();
         } catch (FileNotFoundException e) {

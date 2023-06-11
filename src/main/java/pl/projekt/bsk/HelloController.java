@@ -62,7 +62,7 @@ public class HelloController {
             alert.showAndWait();
         }else {
             serverPort = Integer.parseInt(serverPortField.getText());
-            receiverRunnable = new Receiver(serverPort, receivedFileDirectory, progressBar);
+            receiverRunnable = new Receiver(serverPort, receivedFileDirectory, progressBar, textToSend);
             Thread receiverThread = new Thread(receiverRunnable);
             receiverThread.setDaemon(true);
             receiverThread.start();
@@ -107,8 +107,8 @@ public class HelloController {
 
                 connectionStatus.setFill(Color.GREEN);
                 connectButton.setDisable(true);
-                if(selectedFile!= null && selectedFile.exists())
-                    sendButton.setDisable(false);
+                sendButton.setDisable(false);
+
             }).start();
         }
     }
@@ -120,8 +120,6 @@ public class HelloController {
         selectedFile = fileChooser.showOpenDialog((Stage)((Node)e.getSource()).getScene().getWindow());
         if(selectedFile != null){
             filePath.setText(selectedFile.toString());
-            if(((Sender)senderRunnable).isConnected())
-                sendButton.setDisable(false);
         }
     }
 
@@ -131,21 +129,25 @@ public class HelloController {
         receivedFileDirectory = directoryChooser.showDialog((Stage)((Node)e.getSource()).getScene().getWindow());
         if (receivedFileDirectory != null) {
             directoryPath.setText(receivedFileDirectory.toString());
+            ((Receiver)receiverRunnable).setReceivedFileDirectory(receivedFileDirectory.getAbsolutePath() + "\\");
         }
-        ((Receiver)receiverRunnable).setReceivedFileDirectory(receivedFileDirectory.getAbsolutePath() + "\\");
     }
 
     @FXML
-    public void onSendButtonClick() throws Exception {
-        if(selectedFile == null || !selectedFile.exists()){
+    public void onSendButtonClick() {
+        if((selectedFile == null || !selectedFile.exists()) && textToSend.getText().isEmpty()){
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Error");
-            alert.setHeaderText("Connection error");
-            alert.setContentText("Please choose file");
+            alert.setHeaderText("Sending error");
+            alert.setContentText("Please choose file or type text to send");
             alert.showAndWait();
-        }else{
-            ((Sender)senderRunnable).sendFile(selectedFile, cipherMode);
+        }else {
+            if(!textToSend.getText().isEmpty())
+                ((Sender)senderRunnable).sendText(textToSend.getText(), cipherMode);
+            if (selectedFile != null && selectedFile.exists())
+                ((Sender)senderRunnable).sendFile(selectedFile, cipherMode);
         }
+
     }
 
     @FXML

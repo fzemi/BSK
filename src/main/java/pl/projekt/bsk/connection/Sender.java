@@ -3,6 +3,7 @@ package pl.projekt.bsk.connection;
 import java.io.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.util.Optional;
@@ -76,6 +77,52 @@ public class Sender implements Runnable {
                     }
 
                     InputStream fileBytesEncodedStream = new ByteArrayInputStream(fileBytesEncoded);
+
+                    // send encoded file header to client
+                    byte[] encryptedHeaderBytes = EncryptionUtils.encryptMessageHeader(header, KeyStorage.getSessionKey().get());
+                    sendSize(encryptedHeaderBytes.length);
+                    out.write(encryptedHeaderBytes, 0, encryptedHeaderBytes.length);
+
+                    // send encoded file to client
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    while ((bytes = fileBytesEncodedStream.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytes);
+//                out.flush();
+                    }
+
+                    fileBytesEncodedStream.close();
+                    System.out.println("Koniec wysyłania");
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        };
+        new Thread(task).start();
+    }
+
+    public void sendText(String text, String cipherMode) {
+        Task<Void> task = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                int bytes = 0;
+
+                try {
+                    byte[] textBytesEncoded;
+                    MessageHeader header;
+
+                    if(cipherMode.equals("AES/CBC/PKCS5Padding")) {
+                        IvParameterSpec iv = EncryptionUtils.generateIv();
+                        textBytesEncoded = EncryptionUtils.encryptData(cipherMode, text.getBytes(StandardCharsets.UTF_8),
+                                KeyStorage.getSessionKey().get(), iv);
+                        header = new MessageHeader(null, textBytesEncoded.length, MESSAGE_TYPE_TEXT, ENCRYPTION_TYPE_CBC, iv.getIV());
+                    } else {
+                        textBytesEncoded = EncryptionUtils.encryptData(cipherMode, text.getBytes(StandardCharsets.UTF_8),
+                                KeyStorage.getSessionKey().get(), null);
+                        header = new MessageHeader(null, textBytesEncoded.length, MESSAGE_TYPE_TEXT, ENCRYPTION_TYPE_ECB, null);
+                    }
+
+                    InputStream fileBytesEncodedStream = new ByteArrayInputStream(textBytesEncoded);
 
                     // send encoded file header to client
                     byte[] encryptedHeaderBytes = EncryptionUtils.encryptMessageHeader(header, KeyStorage.getSessionKey().get());
