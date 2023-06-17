@@ -102,7 +102,6 @@ public class EncryptionUtils {
 
         Cipher cipher = Cipher.getInstance(algorithm);
         cipher.init(Cipher.DECRYPT_MODE, key, iv);
-        System.out.println("DATA: " + cipherText.length);
         return cipher.doFinal(cipherText);
     }
 
@@ -142,8 +141,6 @@ public class EncryptionUtils {
             NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         Cipher decryptor = Cipher.getInstance("AES/ECB/PKCS5Padding");
         decryptor.init(Cipher.DECRYPT_MODE, sessionKey);
-
-        System.out.println("HEADER: " + ciphertext.length);
 
         byte[] headerBytes = decryptor.doFinal(ciphertext);
         String messageHeaderString = new String(headerBytes, StandardCharsets.UTF_8);

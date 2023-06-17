@@ -72,11 +72,7 @@ public class Receiver implements Runnable {
             byte[] encryptedHeaderBytes = new byte[headerSize];
             in.read(encryptedHeaderBytes, 0, headerSize);
 
-            System.out.println("Received header size: " + headerSize);
-
             MessageHeader header = EncryptionUtils.decryptMessageHeader(encryptedHeaderBytes, KeyStorage.getSessionKey().get());
-
-            System.out.println(header.getFilename() == null ? "Text " : header.getFilename() + " " + header.getFileSize());
 
             long fileSize = header.getFileSize();
             progressBar.setStyle("-fx-accent: blue;");
@@ -87,7 +83,6 @@ public class Receiver implements Runnable {
                     (bytes = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
                 outputStream.write(buffer, 0, bytes);
                 progressBar.setProgress(outputStream.size() / (double) fileSize);
-                //System.out.println("Received " + bytes + " bytes");
                 outputStream.flush();
             }
 
@@ -106,12 +101,8 @@ public class Receiver implements Runnable {
             if(header.getMessageType() == MESSAGE_TYPE_FILE){
                 String path = receivedFileDirectory + header.getFilename();
                 Files.write(new File(path).toPath(), decodedBytes);
-
-                System.out.println("Pobrano plik");
             } else if (header.getMessageType() == Constants.MESSAGE_TYPE_TEXT) {
                 receivedText.setText(new String(decodedBytes, StandardCharsets.UTF_8));
-                System.out.println("Pobrano tekst");
-
             }
 
             outputStream.close();

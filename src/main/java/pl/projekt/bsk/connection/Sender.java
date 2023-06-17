@@ -91,7 +91,7 @@ public class Sender implements Runnable {
                     }
 
                     fileBytesEncodedStream.close();
-                    System.out.println("Koniec wysyłania");
+                    System.out.println("Text sent");
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
@@ -137,7 +137,7 @@ public class Sender implements Runnable {
                     }
 
                     fileBytesEncodedStream.close();
-                    System.out.println("Koniec wysyłania");
+                    System.out.println("Text sent");
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
