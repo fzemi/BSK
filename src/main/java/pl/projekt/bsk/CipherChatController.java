@@ -15,7 +15,7 @@ import pl.projekt.bsk.connection.Sender;
 import java.io.File;
 
 
-public class HelloController {
+public class CipherChatController {
 
     @FXML
     private TextArea textToSend;

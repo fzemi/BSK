@@ -25,7 +25,7 @@ public class LogInController {
     public void onLoginButtonClick() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException,
             InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException,
             InvalidKeyException {
-        HelloApplication app = new HelloApplication();
+        CipherChatApp app = new CipherChatApp();
         String password = passwordField.getText();
 
         byte[] sha = EncryptionUtils.createSha256(password);
@@ -51,7 +51,7 @@ public class LogInController {
             alert.showAndWait();
         } else {
             EncryptionUtils.setUpKeys();
-            app.changeScene("hello-view.fxml");
+            app.changeScene("cipher-chat.fxml");
         }
     }
 }
